@@ -7,21 +7,24 @@ const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
 bool performLogin(int clientSocket) {
-    char username[50];
-    char password[50];
+    char creds[50];
+    int bytes = 0;
 
     // Receive username and password from the client
-    recv(clientSocket, username, sizeof(username), 0);
-    recv(clientSocket, password, sizeof(password), 0);
+    bytes = recv(clientSocket, creds, sizeof(creds), 0);
+    creds[bytes] = '\0';
 
-    // Perform a simple login check (replace this with your authentication logic)
-    if (strcmp(username, "user") == 0 && strcmp(password, "pass") == 0) {
+    std::cout << "creds: " << creds << std::endl;
+
+     Perform a simple login check (replace this with your authentication logic)
+     if (strcmp(username, "user") == 0 && strcmp(password, "pass") == 0) {
         send(clientSocket, "Login successful", strlen("Login successful"), 0);
         return true;
     } else {
         send(clientSocket, "Login failed", strlen("Login failed"), 0);
         return false;
     }
+    return 1;
 }
 
 int main() {

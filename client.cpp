@@ -8,21 +8,27 @@ const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
 bool login(int clientSocket) {
-    char username[50];
-    char password[50];
+    std::string username;
+    std::string password;
+    std::string creds;
+    int bytes = 0;
 
     std::cout << "Enter username: ";
     std::cin >> username;
     std::cout << "Enter password: ";
     std::cin >> password;
 
+    creds = username + ' ' + password;
+
     // Send login information to the server
-    send(clientSocket, username, strlen(username), 0);
-    send(clientSocket, password, strlen(password), 0);
+    send(clientSocket, creds.c_str(), strlen(creds.c_str()), 0);
 
     // Wait for the server's response
     char response[BUFFER_SIZE];
-    recv(clientSocket, response, BUFFER_SIZE, 0);
+    bytes = recv(clientSocket, response, BUFFER_SIZE, 0);
+    response[bytes] = '\0';
+
+    std::cout << "response: " << response  << std::endl;
 
     // Check if login was successful
     if (strcmp(response, "Login successful") == 0) {
