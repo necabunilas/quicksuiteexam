@@ -2,6 +2,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sstream>
 
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
@@ -9,15 +10,28 @@ const int BUFFER_SIZE = 1024;
 bool performLogin(int clientSocket) {
     char creds[50];
     int bytes = 0;
+    char delimiter = ' ';
 
     // Receive username and password from the client
     bytes = recv(clientSocket, creds, sizeof(creds), 0);
     creds[bytes] = '\0';
+    std::string str(creds);
 
-    std::cout << "creds: " << creds << std::endl;
+    std::cout << "creds: " << str << std::endl;
 
-     Perform a simple login check (replace this with your authentication logic)
-     if (strcmp(username, "user") == 0 && strcmp(password, "pass") == 0) {
+    std::istringstream iss(str);
+    std::string token;
+    std::vector<std::string> tokens;
+
+    while (std::getline(iss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+
+    std::cout << "user: " << tokens[0] << std::endl;
+    std::cout << "pass: " << tokens[1] << std::endl;
+
+     //Perform a simple login check (replace this with your authentication logic)
+    if (strcmp(tokens[0].c_str(), "user") == 0 && strcmp(tokens[1].c_str(), "pass") == 0) {
         send(clientSocket, "Login successful", strlen("Login successful"), 0);
         return true;
     } else {
