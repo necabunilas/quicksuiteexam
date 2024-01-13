@@ -76,22 +76,16 @@ int main() {
     std::cin.get();   
 
     // Echo back data from the server
-    while (true) {
-        std::cout << "Enter message (or type 'exit' to quit): ";
-        std::cin.getline(buffer, BUFFER_SIZE);
+    std::cout << "Enter message (or type 'exit' to quit): ";
+    std::cin.getline(buffer, BUFFER_SIZE);
 
-        std::cout << "You entered: " << buffer << std::endl;
+    std::cout << "You entered: " << buffer << std::endl;
 
-        if (strcmp(buffer, "exit") == 0) {
-            break;
-        }
+    send(clientSocket, buffer, strlen(buffer), 0);
 
-        send(clientSocket, buffer, strlen(buffer), 0);
-
-        // Receive and display the echoed message
-        recv(clientSocket, buffer, BUFFER_SIZE, 0);
-        std::cout << "Server says: " << buffer << std::endl;
-    }
+    // Receive and display the echoed message
+    recv(clientSocket, buffer, BUFFER_SIZE, 0);
+    std::cout << "Server says: " << buffer << std::endl;
 
     // Close the client socket
     close(clientSocket);

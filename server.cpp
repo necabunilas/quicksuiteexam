@@ -134,7 +134,9 @@ int main() {
                     break;
                 }
 
-                std::cout << "message: " << buffer << std::endl;
+                uint8_t msgSequence = static_cast<uint8_t>(std::stoi(buffer)); //cast sequence to uint8_t
+                int initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
+                std::cout << "initial key: 0x" << std::hex << initialKey << std::endl;
 
                 send(clientSocket, buffer, bytesRead, 0);
 
