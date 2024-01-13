@@ -8,6 +8,12 @@
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
+struct data
+{
+    uint initialKey;
+    uint ciphers[64];
+};
+
 uint8_t calculateChecksum(const std::string &username)
 {
     uint8_t checksum = 0;
@@ -158,9 +164,8 @@ int main()
                 }
 
                 uint8_t msgSequence = static_cast<uint8_t>(std::stoi(buffer)); // cast sequence to uint8_t
-                uint initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
-                uint ciphers[64];
-                std::cout << "initial key: 0x" << std::hex << initialKey << std::endl;
+                data clientData;
+                clientData.initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
 
                 uint counter = 0;
                 uint8_t next = 0;
@@ -170,21 +175,20 @@ int main()
                     // get next key
                     if (counter == 0)
                     {
-                        next = next_key(initialKey);
+                        next = next_key(clientData.initialKey);
                     }
                     else
                     {
                         next = next_key(next);
                     }
 
-                    ciphers[counter] = next % 256;
+                    clientData.ciphers[counter] = next % 256;
 
                     // loop back
                     counter++;
                 } while (counter < 64);
 
-
-                send(clientSocket, ciphers, sizeof(ciphers), 0);
+                send(clientSocket, &clientData, sizeof(clientData), 0);
             }
         }
 

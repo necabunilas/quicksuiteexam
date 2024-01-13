@@ -7,6 +7,12 @@ const char *SERVER_IP = "127.0.0.1";
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
+struct data
+{
+    uint initialKey;
+    uint ciphers[64];
+};
+
 bool login(int clientSocket)
 {
     std::string username;
@@ -48,7 +54,6 @@ int main()
     int clientSocket;
     struct sockaddr_in serverAddr;
     char buffer[BUFFER_SIZE];
-    uint ciphers[64];
 
     // Create socket
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -93,13 +98,15 @@ int main()
     send(clientSocket, buffer, strlen(buffer), 0);
 
     // Receive and display the echoed message
-    recv(clientSocket, ciphers, sizeof(ciphers), 0);
+    data serverData;
+    recv(clientSocket, &serverData, sizeof(serverData), 0);
+    std::cout << "initial key: 0x" << std::hex << serverData.initialKey << std::endl;
     std::cout << "cipher keys (first 64 bytes): " << std::endl;
 
     // Print using a loop with the known size
     for (int i = 0; i < 64; ++i)
     {
-        std::cout << std::hex << ciphers[i] << " ";
+        std::cout << std::hex << serverData.ciphers[i] << " ";
     }
 
     // Close the client socket
