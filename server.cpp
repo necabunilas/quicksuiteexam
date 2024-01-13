@@ -14,16 +14,30 @@ struct data
     uint ciphers[64];
 };
 
-uint8_t calculateChecksum(const std::string &username)
+uint8_t calculateChecksum(const std::string &strval)
 {
     uint8_t checksum = 0;
 
-    for (char c : username)
+    for (char c : strval)
     {
         checksum += static_cast<uint8_t>(c);
     }
 
     return ~checksum; // Take the one's complement to get the sum complement
+}
+
+uint8_t convert(const std::string &buffer)
+{
+    uint8_t value = 0;
+
+    for (char c : buffer)
+    {
+        std::cout << "character: " << static_cast<uint8_t>(c) << std::endl;
+        std::cout << "character hex: " << std::hex << static_cast<uint8_t>(c) << std::endl;
+        value += static_cast<uint8_t>(c);
+    }
+
+    return value; // Take the one's complement to get the sum complement
 }
 
 bool checkUsername(uint8_t userChecksum)
@@ -163,7 +177,8 @@ int main()
                     break;
                 }
 
-                uint8_t msgSequence = static_cast<uint8_t>(std::stoi(buffer)); // cast sequence to uint8_t
+                int msgSequence = std::stoi(buffer, nullptr, 16); // cast sequence to uint8_t
+                std::cout << "sequence key: 0x" << std::hex << msgSequence << std::endl;
                 data clientData;
                 clientData.initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
 
