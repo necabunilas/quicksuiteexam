@@ -3,11 +3,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-const char* SERVER_IP = "127.0.0.1";
+const char *SERVER_IP = "127.0.0.1";
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
-bool login(int clientSocket) {
+bool login(int clientSocket)
+{
     std::string username;
     std::string password;
     std::string creds;
@@ -27,26 +28,32 @@ bool login(int clientSocket) {
     int response;
     bytes = recv(clientSocket, &response, sizeof(response), 0);
 
-    std::cout << "response: " << response  << std::endl;
+    std::cout << "response: " << response << std::endl;
 
     // Check if login was successful
-    if (response == 1) {
+    if (response == 1)
+    {
         std::cout << "Login successful!" << std::endl;
         return true;
-    } else {
+    }
+    else
+    {
         std::cout << "Login failed. Server says: " << response << std::endl;
         return false;
     }
 }
 
-int main() {
+int main()
+{
     int clientSocket;
     struct sockaddr_in serverAddr;
     char buffer[BUFFER_SIZE];
+    uint ciphers[64];
 
     // Create socket
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (clientSocket == -1) {
+    if (clientSocket == -1)
+    {
         std::cerr << "Error creating socket." << std::endl;
         return -1;
     }
@@ -58,22 +65,24 @@ int main() {
     serverAddr.sin_port = htons(PORT);
 
     // Connect to the server
-    if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+    {
         std::cerr << "Error connecting to server." << std::endl;
         close(clientSocket);
         return -1;
     }
 
     // Perform login
-    if (!login(clientSocket)) {
+    if (!login(clientSocket))
+    {
         // Login failed, close the connection
         close(clientSocket);
         return -1;
     }
 
     std::cout << "Press Enter to continue...";
-    std::cin.ignore();  // Ignore the newline character in the input buffer
-    std::cin.get();   
+    std::cin.ignore(); // Ignore the newline character in the input buffer
+    std::cin.get();
 
     // Echo back data from the server
     std::cout << "Enter message (or type 'exit' to quit): ";
@@ -84,8 +93,14 @@ int main() {
     send(clientSocket, buffer, strlen(buffer), 0);
 
     // Receive and display the echoed message
-    recv(clientSocket, buffer, BUFFER_SIZE, 0);
-    std::cout << "Server says: " << buffer << std::endl;
+    recv(clientSocket, ciphers, sizeof(ciphers), 0);
+    std::cout << "cipher keys (first 64 bytes): " << std::endl;
+
+    // Print using a loop with the known size
+    for (int i = 0; i < 64; ++i)
+    {
+        std::cout << std::hex << ciphers[i] << " ";
+    }
 
     // Close the client socket
     close(clientSocket);

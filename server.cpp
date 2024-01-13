@@ -8,35 +8,47 @@
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
 
-uint8_t calculateChecksum(const std::string& username) {
+uint8_t calculateChecksum(const std::string &username)
+{
     uint8_t checksum = 0;
 
-    for (char c : username) {
+    for (char c : username)
+    {
         checksum += static_cast<uint8_t>(c);
     }
 
     return ~checksum; // Take the one's complement to get the sum complement
 }
 
-bool checkUsername(uint8_t userChecksum){
+bool checkUsername(uint8_t userChecksum)
+{
 
-    if(calculateChecksum("testuser") == userChecksum){
+    if (calculateChecksum("testuser") == userChecksum)
+    {
         return true;
     }
 
     return false;
 }
 
-bool checkPassword(uint8_t passChecksum){
+bool checkPassword(uint8_t passChecksum)
+{
 
-    if(calculateChecksum("testpass") == passChecksum){
+    if (calculateChecksum("testpass") == passChecksum)
+    {
         return true;
     }
 
     return false;
 }
 
-std::vector<uint8_t> performLogin(int clientSocket) {
+uint32_t next_key(uint32_t key)
+{
+    return (key * 1103515245 + 12345) % 0x7FFFFFFF;
+}
+
+std::vector<uint8_t> performLogin(int clientSocket)
+{
     char creds[50];
     int bytes = 0;
     char delimiter = ' ';
@@ -51,11 +63,12 @@ std::vector<uint8_t> performLogin(int clientSocket) {
     std::string token;
     std::vector<std::string> tokens;
 
-    while (std::getline(iss, token, delimiter)) {
+    while (std::getline(iss, token, delimiter))
+    {
         tokens.push_back(token);
     }
 
-     // Calculate the checksum
+    // Calculate the checksum
     uint8_t uchecksum = calculateChecksum(tokens[0]);
     sums.push_back(uchecksum);
 
@@ -63,19 +76,21 @@ std::vector<uint8_t> performLogin(int clientSocket) {
     uint8_t pchecksum = calculateChecksum(tokens[1]);
     sums.push_back(pchecksum);
 
-     //Perform a simple login check (replace this with your authentication logic)
+    // Perform a simple login check (replace this with your authentication logic)
     int valueToSend = 0;
-    if (checkUsername(uchecksum) && checkPassword(pchecksum)) {
+    if (checkUsername(uchecksum) && checkPassword(pchecksum))
+    {
         valueToSend = 1;
         send(clientSocket, &valueToSend, sizeof(valueToSend), 0);
         return sums;
-    } 
+    }
 
-        send(clientSocket, &valueToSend, sizeof(valueToSend), 0);
-        return std::vector<uint8_t>(); //send empty vector
+    send(clientSocket, &valueToSend, sizeof(valueToSend), 0);
+    return std::vector<uint8_t>(); // send empty vector
 }
 
-int main() {
+int main()
+{
     int serverSocket, clientSocket;
     struct sockaddr_in serverAddr, clientAddr;
     char buffer[BUFFER_SIZE];
@@ -83,7 +98,8 @@ int main() {
 
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1) {
+    if (serverSocket == -1)
+    {
         std::cerr << "Error creating socket." << std::endl;
         return -1;
     }
@@ -95,14 +111,16 @@ int main() {
     serverAddr.sin_port = htons(PORT);
 
     // Bind socket
-    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+    if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+    {
         std::cerr << "Error binding socket." << std::endl;
         close(serverSocket);
         return -1;
     }
 
     // Listen for incoming connections
-    if (listen(serverSocket, 10) == -1) {
+    if (listen(serverSocket, 10) == -1)
+    {
         std::cerr << "Error listening for connections." << std::endl;
         close(serverSocket);
         return -1;
@@ -111,11 +129,13 @@ int main() {
     std::cout << "Server listening on port " << PORT << "..." << std::endl;
 
     // Accept incoming connections and perform login
-    while (true) {
+    while (true)
+    {
         socklen_t clientAddrLen = sizeof(clientAddr);
-        clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
+        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
 
-        if (clientSocket == -1) {
+        if (clientSocket == -1)
+        {
             std::cerr << "Error accepting connection." << std::endl;
             continue;
         }
@@ -125,24 +145,46 @@ int main() {
         std::vector<uint8_t> sums = performLogin(clientSocket);
 
         // Perform login
-        if (!sums.empty()) {
+        if (!sums.empty())
+        {
             // Echo back data from authenticated clients
-            while (true) {
+            while (true)
+            {
                 int bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
-                if (bytesRead <= 0) {
+                if (bytesRead <= 0)
+                {
                     // Connection closed or error
                     break;
                 }
 
-                uint8_t msgSequence = static_cast<uint8_t>(std::stoi(buffer)); //cast sequence to uint8_t
-                int initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
+                uint8_t msgSequence = static_cast<uint8_t>(std::stoi(buffer)); // cast sequence to uint8_t
+                uint initialKey = (msgSequence << 16) | (sums[0] << 8) | sums[1];
+                uint ciphers[64];
                 std::cout << "initial key: 0x" << std::hex << initialKey << std::endl;
 
-                send(clientSocket, buffer, bytesRead, 0);
+                uint counter = 0;
+                uint8_t next = 0;
 
-                //clear buffer array
-                std::memset(buffer, 0, BUFFER_SIZE);
-                buffer[0] = '\0';
+                do
+                {
+                    // get next key
+                    if (counter == 0)
+                    {
+                        next = next_key(initialKey);
+                    }
+                    else
+                    {
+                        next = next_key(next);
+                    }
+
+                    ciphers[counter] = next % 256;
+
+                    // loop back
+                    counter++;
+                } while (counter < 64);
+
+
+                send(clientSocket, ciphers, sizeof(ciphers), 0);
             }
         }
 
