@@ -13,7 +13,6 @@ uint8_t calculateChecksum(const std::string& username) {
 
     for (char c : username) {
         checksum += static_cast<uint8_t>(c);
-        std::cout << "checksum loop: " << checksum << std::endl;
     }
 
     return ~checksum; // Take the one's complement to get the sum complement
@@ -22,6 +21,15 @@ uint8_t calculateChecksum(const std::string& username) {
 bool checkUsername(uint8_t userChecksum){
 
     if(calculateChecksum("testuser") == userChecksum){
+        return true;
+    }
+
+    return false;
+}
+
+bool checkPassword(uint8_t passChecksum){
+
+    if(calculateChecksum("testpass") == passChecksum){
         return true;
     }
 
@@ -55,9 +63,12 @@ bool performLogin(int clientSocket) {
     std::cout << "user checksum: " << static_cast<int>(uchecksum) << std::endl;
 
     std::cout << "pass: " << tokens[1] << std::endl;
+    // Calculate the checksum
+    uint8_t pchecksum = calculateChecksum(tokens[1]);
+    std::cout << "pass checksum: " << static_cast<int>(pchecksum) << std::endl;
 
      //Perform a simple login check (replace this with your authentication logic)
-    if (checkUsername(uchecksum) && strcmp(tokens[1].c_str(), "pass") == 0) {
+    if (checkUsername(uchecksum) && checkPassword(pchecksum)) {
         send(clientSocket, "Login successful", strlen("Login successful"), 0);
         return true;
     } 
