@@ -31,7 +31,7 @@ bool login(int clientSocket) {
     std::cout << "response: " << response  << std::endl;
 
     // Check if login was successful
-    if (strcmp(response, "Login successful") == 0) {
+    if (strcmp(response, "OK") == 0) {
         std::cout << "Login successful!" << std::endl;
         return true;
     } else {

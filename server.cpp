@@ -36,17 +36,16 @@ bool checkPassword(uint8_t passChecksum){
     return false;
 }
 
-bool performLogin(int clientSocket) {
+std::vector<uint8_t> performLogin(int clientSocket) {
     char creds[50];
     int bytes = 0;
     char delimiter = ' ';
+    std::vector<uint8_t> sums;
 
     // Receive username and password from the client
     bytes = recv(clientSocket, creds, sizeof(creds), 0);
     creds[bytes] = '\0';
     std::string str(creds);
-
-    std::cout << "creds: " << str << std::endl;
 
     std::istringstream iss(str);
     std::string token;
@@ -56,31 +55,29 @@ bool performLogin(int clientSocket) {
         tokens.push_back(token);
     }
 
-    //checksum for username
-    std::cout << "user: " << tokens[0] << std::endl;
      // Calculate the checksum
     uint8_t uchecksum = calculateChecksum(tokens[0]);
-    std::cout << "user checksum: " << static_cast<int>(uchecksum) << std::endl;
-
-    std::cout << "pass: " << tokens[1] << std::endl;
+    sums.push_back(uchecksum);
+    
     // Calculate the checksum
     uint8_t pchecksum = calculateChecksum(tokens[1]);
-    std::cout << "pass checksum: " << static_cast<int>(pchecksum) << std::endl;
+    sums.push_back(pchecksum);
 
      //Perform a simple login check (replace this with your authentication logic)
     if (checkUsername(uchecksum) && checkPassword(pchecksum)) {
-        send(clientSocket, "Login successful", strlen("Login successful"), 0);
-        return true;
+        send(clientSocket, "OK", strlen("OK"), 0);
+        return sums;
     } 
 
-        send(clientSocket, "Login failed", strlen("Login failed"), 0);
-        return false;
+        send(clientSocket, "FAILED", strlen("FAILED"), 0);
+        return std::vector<uint8_t>(); //send empty vector
 }
 
 int main() {
     int serverSocket, clientSocket;
     struct sockaddr_in serverAddr, clientAddr;
     char buffer[BUFFER_SIZE];
+    std::vector<uint8_t> sums;
 
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -123,8 +120,10 @@ int main() {
 
         std::cout << "Connection accepted from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
 
+        std::vector<uint8_t> sums = performLogin(clientSocket);
+
         // Perform login
-        if (performLogin(clientSocket)) {
+        if (!sums.empty()) {
             // Echo back data from authenticated clients
             while (true) {
                 int bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
