@@ -58,18 +58,20 @@ std::vector<uint8_t> performLogin(int clientSocket) {
      // Calculate the checksum
     uint8_t uchecksum = calculateChecksum(tokens[0]);
     sums.push_back(uchecksum);
-    
+
     // Calculate the checksum
     uint8_t pchecksum = calculateChecksum(tokens[1]);
     sums.push_back(pchecksum);
 
      //Perform a simple login check (replace this with your authentication logic)
+    int valueToSend = 0;
     if (checkUsername(uchecksum) && checkPassword(pchecksum)) {
-        send(clientSocket, "OK", strlen("OK"), 0);
+        valueToSend = 1;
+        send(clientSocket, &valueToSend, sizeof(valueToSend), 0);
         return sums;
     } 
 
-        send(clientSocket, "FAILED", strlen("FAILED"), 0);
+        send(clientSocket, &valueToSend, sizeof(valueToSend), 0);
         return std::vector<uint8_t>(); //send empty vector
 }
 

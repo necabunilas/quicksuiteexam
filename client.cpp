@@ -24,14 +24,13 @@ bool login(int clientSocket) {
     send(clientSocket, creds.c_str(), strlen(creds.c_str()), 0);
 
     // Wait for the server's response
-    char response[BUFFER_SIZE];
-    bytes = recv(clientSocket, response, BUFFER_SIZE, 0);
-    response[bytes] = '\0';
+    int response;
+    bytes = recv(clientSocket, &response, sizeof(response), 0);
 
     std::cout << "response: " << response  << std::endl;
 
     // Check if login was successful
-    if (strcmp(response, "OK") == 0) {
+    if (response == 1) {
         std::cout << "Login successful!" << std::endl;
         return true;
     } else {
@@ -94,7 +93,6 @@ int main() {
         std::cout << "Server says: " << buffer << std::endl;
     }
 
-    std::cout << "outside loop " << std::endl;
     // Close the client socket
     close(clientSocket);
 
