@@ -3,9 +3,30 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sstream>
+#include <cstdint>
 
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;
+
+uint8_t calculateChecksum(const std::string& username) {
+    uint8_t checksum = 0;
+
+    for (char c : username) {
+        checksum += static_cast<uint8_t>(c);
+        std::cout << "checksum loop: " << checksum << std::endl;
+    }
+
+    return ~checksum; // Take the one's complement to get the sum complement
+}
+
+bool checkUsername(uint8_t userChecksum){
+
+    if(calculateChecksum("testuser") == userChecksum){
+        return true;
+    }
+
+    return false;
+}
 
 bool performLogin(int clientSocket) {
     char creds[50];
@@ -27,18 +48,22 @@ bool performLogin(int clientSocket) {
         tokens.push_back(token);
     }
 
+    //checksum for username
     std::cout << "user: " << tokens[0] << std::endl;
+     // Calculate the checksum
+    uint8_t uchecksum = calculateChecksum(tokens[0]);
+    std::cout << "user checksum: " << static_cast<int>(uchecksum) << std::endl;
+
     std::cout << "pass: " << tokens[1] << std::endl;
 
      //Perform a simple login check (replace this with your authentication logic)
-    if (strcmp(tokens[0].c_str(), "user") == 0 && strcmp(tokens[1].c_str(), "pass") == 0) {
+    if (checkUsername(uchecksum) && strcmp(tokens[1].c_str(), "pass") == 0) {
         send(clientSocket, "Login successful", strlen("Login successful"), 0);
         return true;
-    } else {
+    } 
+
         send(clientSocket, "Login failed", strlen("Login failed"), 0);
         return false;
-    }
-    return 1;
 }
 
 int main() {
@@ -97,7 +122,13 @@ int main() {
                     break;
                 }
 
+                std::cout << "message: " << buffer << std::endl;
+
                 send(clientSocket, buffer, bytesRead, 0);
+
+                //clear buffer array
+                std::memset(buffer, 0, BUFFER_SIZE);
+                buffer[0] = '\0';
             }
         }
 

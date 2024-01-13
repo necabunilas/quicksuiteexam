@@ -72,10 +72,16 @@ int main() {
         return -1;
     }
 
+    std::cout << "Press Enter to continue...";
+    std::cin.ignore();  // Ignore the newline character in the input buffer
+    std::cin.get();   
+
     // Echo back data from the server
     while (true) {
         std::cout << "Enter message (or type 'exit' to quit): ";
         std::cin.getline(buffer, BUFFER_SIZE);
+
+        std::cout << "You entered: " << buffer << std::endl;
 
         if (strcmp(buffer, "exit") == 0) {
             break;
@@ -88,6 +94,7 @@ int main() {
         std::cout << "Server says: " << buffer << std::endl;
     }
 
+    std::cout << "outside loop " << std::endl;
     // Close the client socket
     close(clientSocket);
 
