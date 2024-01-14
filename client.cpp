@@ -9,8 +9,8 @@ const int BUFFER_SIZE = 1024;
 
 struct data
 {
-    uint initialKey;
-    uint ciphers[64];
+    uint32_t initialKey;
+    uint16_t ciphers[64];
 };
 
 bool login(int clientSocket)

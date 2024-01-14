@@ -11,7 +11,7 @@ const int BUFFER_SIZE = 1024;
 struct data
 {
     uint32_t initialKey;
-    uint ciphers[64];
+    uint16_t ciphers[64];
 };
 
 uint8_t calculateChecksum(const std::string &strval)
@@ -175,7 +175,7 @@ int main()
                 std::cout << "initial key: 0x" << std::hex << clientData.initialKey << std::endl;
 
                 uint counter = 0;
-                uint next = 0;
+                uint32_t next = 0;
 
                 do
                 {
